@@ -181,10 +181,7 @@ public class ImageUndistortion{
 			for(int j = 0; j < nx; j++)
 			{
 				//TODO: sample the distorted and undistorted grid points at the lattice points
-				// TODO
-				// TODO
-				// TODO
-				// TODO
+		        //TODO
 			}
 		}
 		
@@ -199,9 +196,10 @@ public class ImageUndistortion{
 		// Compute the distorted points:
 		// XD2 = XU2 + (XU2 - XD2)
 		// TODO:
-		// TODO:
-		// TODO:
-		// TODO:
+		Xd2.multiplyBy(-1);
+		Yd2.multiplyBy(-1);
+		Xd2.add(Xu2,Xu2);
+		Yd2.add(Yu2,Yu2);
 		
 		
 		// 2. Polynom of degree d
@@ -216,11 +214,11 @@ public class ImageUndistortion{
 		
 		// Number of Coefficients
 		// TODO:
-		int numCoeff = 0;
+		int numCoeff = (degree+1)*(degree+2)/2;
 		
 		// Number of Correspondences
 		// TODO:
-		int numCorresp = 0;
+		int numCorresp = Xd2.getCols()*Xd2.getRows();
 		
 		// Print out of the used parameters
 		System.out.println("Polynom of degree: " + degree);
@@ -228,7 +226,7 @@ public class ImageUndistortion{
 		System.out.println("Number of Correspondences: " + numCorresp);
 		
 		// 3.Create the matrix A
-		SimpleMatrix A = new SimpleMatrix(numCorresp, numCoeff);
+		SimpleMatrix A = new SimpleMatrix(numCorresp, numCoeff); //Matrix A is the function of the destorted.
 		A.zeros();
 		
 		// Realign the grid matrix into a vector
@@ -258,18 +256,20 @@ public class ImageUndistortion{
 				for(int j = 0; j <= (degree-i); j++)
 				{
 					// TODO:
-					
+					A.setElementValue(r, cc, Math.pow(Xu2_vec.getElement(r),i)*Math.pow(Yu2_vec.getElement(r),j));
+					cc++;
 				}
 			}
 		}
 		
 		// Compute the pseudo-inverse of A with the help of the SVD (class: DecompositionSVD)
 		// TODO
-		// TODO
-		
+		DecompositionSVD svd= new DecompositionSVD(A);
+		SimpleMatrix A_pseudoinverse = svd.inverse(true);
 		
 		// Compute the distortion coefficients
-		// TODO
+		SimpleVector u_vec = SimpleOperators.multiply(A_pseudoinverse, Xd2_vec);
+		SimpleVector v_vec = SimpleOperators.multiply(A_pseudoinverse, Yd2_vec);
 		// TODO
 		
 		
@@ -291,8 +291,8 @@ public class ImageUndistortion{
 					for(int l = 0; l <= degree - k; l++)
 					{
 						// TODO
-						// TODO
-						// TODO
+						xDist.setAtIndex(x, y, (float)(xDist.getAtIndex(x, y)+u_vec.getElement(cc)*Math.pow(x,k)*Math.pow(y, l)));
+						yDist.setAtIndex(x, y, (float)(yDist.getAtIndex(x, y)+v_vec.getElement(cc)*Math.pow(x,k)*Math.pow(y, l)));
 					}
 				}
 			}
@@ -305,7 +305,8 @@ public class ImageUndistortion{
 			for(int j = 0; j < imSize; j++)
 			{
 				// TODO
-				// TODO
+				float cal = InterpolationOperators.interpolateLinear(distortedImage, xDist.getAtIndex(i,j), yDist.getAtIndex(i, j));
+				undistortedImage.setAtIndex(i, j, val);
 			}
 		}
 		undistortedImage.show("Undistorted Image");
